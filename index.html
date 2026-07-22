@@ -199,6 +199,49 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
 .modebtn{border:0;background:transparent;padding:7px 15px;border-radius:8px;cursor:pointer;
   font-family:inherit;font-size:13.5px;font-weight:600;color:var(--dim)}
 .modebtn.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(16,32,48,.12)}
+.quotegrid td{vertical-align:middle}
+.quotegrid .ticks{white-space:nowrap}
+.tick{display:inline-flex;align-items:center;gap:5px;margin-right:11px;font-size:12.5px;color:var(--dim);cursor:pointer;user-select:none}
+.tick input{width:15px;height:15px;accent-color:var(--teal);cursor:pointer}
+.qtotal{text-align:right;white-space:nowrap}
+.qprice{font-family:var(--mono);font-weight:700;color:var(--ink);font-size:14.5px}
+.qwarn{color:#b12a2a;font-size:12.5px;font-weight:600}
+.qwarn2{color:#b12a2a;font-size:13px;margin:12px 0 0}
+.qband{font-size:11px;color:var(--dim);font-family:var(--mono);margin-top:2px}
+.ralign{text-align:right}
+.totals{margin-top:16px}
+.installtog{margin-bottom:14px}
+.ttable{width:100%;max-width:340px;margin-left:auto;border-collapse:collapse;font-size:14px}
+.ttable td{padding:6px 0}
+.ttable td:last-child{text-align:right;font-weight:600}
+.ttable .tsub td{border-top:1px solid var(--line);padding-top:10px}
+.ttable .tgrand td{border-top:2px solid var(--ink);padding-top:10px;font-size:17px;font-weight:800;color:var(--ink)}
+@media print{
+  .p-quote .p-grid .ra,.p-quote .p-tot .ra{text-align:right}
+  .p-tot{width:auto;margin:16px 0 0 auto;border-collapse:collapse;font-size:13px}
+  .p-tot td{padding:5px 10px}
+  .p-tot .sub td{border-top:1px solid #333}
+  .p-tot .grand td{border-top:2px solid #000;font-weight:800;font-size:15px}
+  .p-foot{margin-top:26px;font-size:11px;color:#444;line-height:1.6}
+}
+.ordcell{white-space:nowrap}
+.orddate{margin-left:8px;font-family:var(--mono);font-size:12.5px;padding:4px 7px;border:1px solid var(--line);border-radius:7px}
+.grid tr.ordered td{background:#f3faf6}
+.togrow{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:14px}
+.ordbar{display:flex;align-items:flex-end;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.fld.inline{flex-direction:column;gap:5px}
+.exgst{color:var(--dim);font-size:12px;text-align:right;padding-top:2px}
+@media print{
+  .qgrid .sz{text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;white-space:nowrap}
+  .qgrid .ct{text-align:center;width:22px}
+  .qgrid .wname{font-weight:700}
+  .qgrid th{font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .exg{text-align:right;color:#555;font-size:11px}
+  .fabsec{margin-top:26px;page-break-inside:avoid}
+  .fabsec h3{font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px}
+  .fabbox{border:1px solid #333;padding:10px 12px;font-size:12.5px;min-height:52px;line-height:1.6}
+  .fablines div{border-bottom:1px solid #888;height:22px}
+}
 </style>
 </head>
 <body>
@@ -230,6 +273,58 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   var SUPABASE_KEY = CFG.key || "";
   /* ============================================================ */
 
+
+  /* ============================================================
+     PRICE TABLES  —  SAN price list effective 1 December 2025
+     Prices EXCLUDE GST. Columns are widths, rows are drops (mm).
+     A size is charged at the next band up (e.g. 1000 wide uses
+     the 1230 column). To update prices later, edit the numbers
+     here, keeping each row the same length as the widths list.
+     ============================================================ */
+  var PRICE_WIDTHS = [630, 930, 1230, 1530, 1830, 2130, 2430, 2730, 3030, 3300, 3500];
+
+  var PRICE_TABLES = {
+    "Group A - Sunscreen": {
+      label: "Group A — Sunscreen",
+      widths: PRICE_WIDTHS,
+      drops: [900, 1200, 1500, 1800, 2100, 2400, 2700, 3000],
+      rows: {
+        900:  [114, 149, 164, 191, 226, 268, 290, 320, 352, 392, 422],
+        1200: [121, 157, 171, 199, 232, 275, 298, 331, 361, 399, 437],
+        1500: [129, 159, 188, 219, 258, 308, 335, 369, 393, 422, 454],
+        1800: [155, 170, 205, 234, 286, 340, 368, 424, 448, 469, 516],
+        2100: [164, 183, 220, 258, 308, 373, 399, 495, 502, 516, 579],
+        2400: [176, 195, 236, 278, 335, 405, 437, 549, 564, 579, 641],
+        2700: [189, 206, 252, 298, 356, 437, 468, 604, 627, 657, 695],
+        3000: [204, 217, 267, 326, 375, 461, 516, 625, 679, 704, 735]
+      }
+    },
+    "Group B - Roller": {
+      label: "Group B — Roller",
+      widths: PRICE_WIDTHS,
+      drops: [900, 1200, 1500, 1800, 2100, 2400, 2700],
+      rows: {
+        900:  [86,  96,  114, 129, 159, 180, 200, 263, 290, 341, 359],
+        1200: [92,  103, 122, 139, 169, 189, 206, 271, 311, 355, 382],
+        1500: [97,  110, 131, 150, 182, 205, 224, 297, 346, 397, 422],
+        1800: [108, 117, 136, 162, 192, 220, 243, 318, 371, 437, 460],
+        2100: [119, 125, 145, 168, 204, 237, 263, 345, 397, 460, 478],
+        2400: [129, 135, 155, 176, 206, 258, 284, 368, 421, 478, 516],
+        2700: [141, 144, 164, 186, 226, 290, 320, 399, 443, 516, 531]
+      }
+    }
+  };
+  var PRICE_GROUPS = ["Group A - Sunscreen", "Group B - Roller"];
+
+  /* Charges — edit here if any of these change */
+  var INSTALL_PER_BLIND = 50;
+  var ADDONS = [
+    { key: "motor",   label: "Motorisation", price: 10 },
+    { key: "highFit", label: "High fit",     price: 10 },
+    { key: "dual",    label: "Dual brackets", price: 30 }
+  ];
+  var GST_RATE = 0.10;
+
   var STATUSES = ["Not Started", "In Production", "Fabric / Product on Order",
     "Delayed", "On Hold", "Cancelled", "Job Complete"];
   var STATUS_CLASS = {
@@ -242,7 +337,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   var LEAD_DAYS = 25;
 
   var db = null, user = null;
-  var clients = [], jobs = [], holidays = [], holidaySet = {};
+  var clients = [], jobs = [], holidays = [], quotes = [], holidaySet = {};
   var app, booted = false;
 
   /* ---------- helpers ---------- */
@@ -325,7 +420,8 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     var res = await Promise.all([
       db.from("clients").select("*").order("name"),
       db.from("jobs").select("*").order("created_at", { ascending: false }),
-      db.from("holidays").select("*").order("day")
+      db.from("holidays").select("*").order("day"),
+      db.from("quotes").select("*").order("created_at", { ascending: false })
     ]);
     if (res[0].error || res[1].error || res[2].error) {
       throw (res[0].error || res[1].error || res[2].error);
@@ -333,8 +429,12 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     clients = res[0].data || [];
     jobs = (res[1].data || []).map(toApp);
     holidays = res[2].data || [];
+    /* quotes table is optional until quotes.sql has been run */
+    quotes = (res[3] && !res[3].error) ? (res[3].data || []).map(toAppQuote) : [];
+    if (res[3] && res[3].error) quotesReady = false; else quotesReady = true;
     rebuildHolidaySet();
   }
+  var quotesReady = true;
   var rtSetUp = false;
   function setupRealtime() {
     if (rtSetUp) return; rtSetUp = true;
@@ -342,6 +442,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       .on("postgres_changes", { event: "*", schema: "public", table: "jobs" }, onRemoteChange)
       .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, onRemoteChange)
       .on("postgres_changes", { event: "*", schema: "public", table: "holidays" }, onRemoteChange)
+      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, onRemoteChange)
       .subscribe();
   }
   var remoteT;
@@ -380,6 +481,8 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     if (state.view === "job") return renderJob();
     if (state.view === "clients") return renderClients();
     if (state.view === "holidays") return renderHolidays();
+    if (state.view === "quotes") return quotesReady ? renderQuotes() : renderQuotesNotReady();
+    if (state.view === "quote") return renderQuoteEditor();
     return renderDashboard();
   }
   function configured() {
@@ -387,7 +490,102 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       SUPABASE_URL.indexOf("PASTE_") === -1 && SUPABASE_KEY.indexOf("PASTE_") === -1;
   }
 
-  var state = { view: "dashboard", jobId: null, tab: "info", clientView: false, showCompleted: false, search: "" };
+  var state = { view: "dashboard", jobId: null, quoteId: null, tab: "info", clientView: false, showCompleted: false, search: "", quoteSearch: "" };
+
+  /* ---------- quoting ---------- */
+  var MAX_QUOTE_WINDOWS = 30;
+
+  function blankQuoteWindow() {
+    return { id: uid(), name: "", group: PRICE_GROUPS[0], width: "", drop: "",
+             motor: false, highFit: false, dual: false };
+  }
+  function toAppQuote(r) {
+    return {
+      id: r.id,
+      ref: r.quote_ref || "",
+      clientId: r.client_id || null,
+      jobName: r.job_name || "",
+      date: r.quote_date || "",
+      install: r.include_install !== false,
+      gst: r.include_gst === true,
+      ordered: r.ordered === true,
+      orderedDate: r.ordered_date || "",
+      fabricNotes: r.fabric_notes || "",
+      windows: Array.isArray(r.windows) && r.windows.length ? r.windows : [blankQuoteWindow()]
+    };
+  }
+  var QUOTE_COL = {
+    ref: "quote_ref", clientId: "client_id", jobName: "job_name", date: "quote_date",
+    install: "include_install", gst: "include_gst", ordered: "ordered",
+    orderedDate: "ordered_date", fabricNotes: "fabric_notes", windows: "windows"
+  };
+  function getQuote(id) { return quotes.filter(function (q) { return q.id === id; })[0]; }
+
+  var qPending = {}, qPatchT = {};
+  function queueQuotePatch(id, col, value) {
+    qPending[id] = qPending[id] || {};
+    qPending[id][col] = value;
+    clearTimeout(qPatchT[id]);
+    qPatchT[id] = setTimeout(function () { flushQuotePatch(id); }, 700);
+  }
+  async function flushQuotePatch(id) {
+    var patch = qPending[id]; if (!patch) return;
+    delete qPending[id];
+    var r = await db.from("quotes").update(patch).eq("id", id);
+    if (r.error) toast("Save failed — check your connection.");
+  }
+  function setQuoteField(q, field, value) {
+    q[field] = value;
+    if (QUOTE_COL[field]) queueQuotePatch(q.id, QUOTE_COL[field], value);
+  }
+
+  function bandUp(list, v) {
+    for (var i = 0; i < list.length; i++) if (list[i] >= v) return list[i];
+    return null;
+  }
+  /* Returns { price, wBand, dBand } or { error } */
+  function blindPrice(group, width, drop) {
+    var t = PRICE_TABLES[group];
+    if (!t) return { error: "Pick a blind type" };
+    var w = Number(width), d = Number(drop);
+    if (!isFinite(w) || w <= 0 || !isFinite(d) || d <= 0) return { error: "" };
+    var wB = bandUp(t.widths, w), dB = bandUp(t.drops, d);
+    if (wB === null || dB === null) return { error: "Over size — check with office" };
+    var row = t.rows[dB];
+    var idx = t.widths.indexOf(wB);
+    if (!row || idx < 0 || typeof row[idx] !== "number") return { error: "No price listed" };
+    return { price: row[idx], wBand: wB, dBand: dB };
+  }
+  function addonTotal(w) {
+    var t = 0;
+    ADDONS.forEach(function (a) { if (w[a.key]) t += a.price; });
+    return t;
+  }
+  function quoteLines(q) {
+    return (q.windows || []).map(function (w) {
+      var r = blindPrice(w.group, w.width, w.drop);
+      var counts = typeof r.price === "number";
+      var blind = counts ? r.price : 0;
+      var addons = addonTotal(w);
+      var install = q.install ? INSTALL_PER_BLIND : 0;
+      return { w: w, res: r, blind: blind, addons: addons, install: install,
+               total: counts ? blind + addons + install : 0, counts: counts };
+    });
+  }
+  function quoteTotals(q) {
+    var t = { blinds: 0, addons: 0, install: 0, qty: 0, sub: 0, gst: 0, total: 0, unpriced: 0 };
+    quoteLines(q).forEach(function (L) {
+      if (L.counts) { t.blinds += L.blind; t.addons += L.addons; t.install += L.install; t.qty++; }
+      else if (L.w.width || L.w.drop || L.w.name) t.unpriced++;
+    });
+    t.sub = t.blinds + t.addons + t.install;
+    t.gst = q.gst ? Math.round(t.sub * GST_RATE * 100) / 100 : 0;
+    t.total = Math.round((t.sub + t.gst) * 100) / 100;
+    return t;
+  }
+  function money(v) {
+    return "$" + (Math.round(v * 100) / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
 
   function topbar(active) {
     return '<header class="top">' +
@@ -396,6 +594,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       '<nav class="nav">' +
       '<button class="navlink ' + (active === "dashboard" ? "on" : "") + '" data-go="dashboard">Jobs</button>' +
       '<button class="navlink ' + (active === "clients" ? "on" : "") + '" data-go="clients">Clients</button>' +
+      '<button class="navlink ' + (active === "quotes" ? "on" : "") + '" data-go="quotes">Quotes</button>' +
       '<button class="navlink ' + (active === "holidays" ? "on" : "") + '" data-go="holidays">Holidays</button>' +
       '</nav>' +
       '<div class="topactions">' +
@@ -625,6 +824,247 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       '<tr><td>Type</td><td colspan="2">' + esc(w.faceRec || "") + '</td></tr>' +
       '<tr><td>Cloth</td><td class="mono strong">' + mm(cw) + '</td><td class="mono strong">' + mm(clothDrop(w.drop)) + '</td></tr>' +
       '<tr><td>Tube / Baserail</td><td class="mono">' + mm(tubeLength(w.faceRec, w.width)) + '</td><td class="mono">' + mm(baserail(w.faceRec, w.width)) + '</td></tr></table></div>';
+  }
+
+
+  function renderQuotesNotReady() {
+    app.innerHTML = topbar("quotes") + '<main class="wrap">' +
+      '<div class="pagehead"><div><h1>Quotes</h1></div></div>' +
+      '<div class="empty"><h3>One setup step left</h3>' +
+      '<p>Quotes need their database table. In Supabase go to <b>SQL Editor → New query</b>, ' +
+      'paste in <b>quotes.sql</b> and click <b>Run</b>, then refresh this page.</p></div>' +
+      '</main>' + footer();
+  }
+
+  /* ---------- quote list ---------- */
+  function renderQuotes() {
+    var q = (state.quoteSearch || "").toLowerCase();
+    var list = quotes.filter(function (x) {
+      if (!q) return true;
+      var c = getClient(x.clientId);
+      return [x.ref, x.jobName, c ? c.name : "", x.ordered ? "ordered" : ""]
+        .join(" ").toLowerCase().indexOf(q) !== -1;
+    });
+
+    var rows = list.map(function (x) {
+      var c = getClient(x.clientId);
+      var T = quoteTotals(x);
+      return '<tr' + (x.ordered ? ' class="ordered"' : '') + '>' +
+        '<td class="mono">' + esc(x.ref || "—") + '</td>' +
+        '<td class="strong">' + esc(x.jobName || "Untitled quote") + '</td>' +
+        '<td>' + esc(c ? c.name : "—") + '</td>' +
+        '<td class="mono">' + esc(fmtDate(x.date)) + '</td>' +
+        '<td class="mono ralign">' + T.qty + '</td>' +
+        '<td class="mono ralign strong">' + money(T.total) + '</td>' +
+        '<td class="ordcell">' +
+          '<label class="tick"><input type="checkbox" data-q-ordered="' + x.id + '" ' + (x.ordered ? "checked" : "") + '>' +
+          '<span>Ordered</span></label>' +
+          (x.ordered ? '<input class="orddate" type="date" value="' + esc(x.orderedDate || "") + '" data-q-orddate="' + x.id + '">' : '') +
+        '</td>' +
+        '<td class="rowact">' +
+        '<button class="btn small" data-edit-quote="' + x.id + '">Edit</button>' +
+        '<button class="btn small danger-ghost" data-del-quote="' + x.id + '">Delete</button></td></tr>';
+    }).join("");
+
+    app.innerHTML = topbar("quotes") +
+      '<main class="wrap"><div class="pagehead">' +
+      '<div><h1>Quotes</h1><p class="sub">' + quotes.length + ' quote' + (quotes.length === 1 ? "" : "s") + ' saved</p></div>' +
+      '<div class="headctrls">' +
+      '<input class="search" placeholder="Search quotes or clients" value="' + esc(state.quoteSearch || "") + '" data-qsearch>' +
+      '<button class="btn primary" data-action="new-quote">New quote</button>' +
+      '</div></div>' +
+      (quotes.length
+        ? '<div class="card"><table class="grid"><thead><tr>' +
+          '<th>Quote</th><th>Job</th><th>Client</th><th>Date</th><th class="ralign">Blinds</th>' +
+          '<th class="ralign">Total</th><th>Ordered</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' +
+          (list.length ? "" : '<div class="nomatch">No quotes match “' + esc(state.quoteSearch) + '”.</div>') + '</div>'
+        : '<div class="empty"><h3>No quotes yet</h3><p>Create your first quote to get started.</p>' +
+          '<button class="btn primary" data-action="new-quote">New quote</button></div>') +
+      '</main>' + footer();
+  }
+
+  /* ---------- quote editor ---------- */
+  function renderQuoteEditor() {
+    var q = getQuote(state.quoteId);
+    if (!q) { state.view = "quotes"; return render(); }
+    var lines = quoteLines(q);
+    var T = quoteTotals(q);
+    var c = getClient(q.clientId);
+    var clientOpts = '<option value="">— no client selected —</option>' + clients.map(function (cc) {
+      return '<option value="' + cc.id + '" ' + (cc.id === q.clientId ? "selected" : "") + '>' + esc(cc.name) + '</option>';
+    }).join("");
+
+    var rows = lines.map(function (L, i) {
+      var w = L.w;
+      var groupOpts = PRICE_GROUPS.map(function (g) {
+        return '<option value="' + esc(g) + '" ' + (g === w.group ? "selected" : "") + '>' + esc(PRICE_TABLES[g].label) + '</option>';
+      }).join("");
+      var boxes = ADDONS.map(function (a) {
+        return '<label class="tick" title="' + esc(a.label) + ' ' + money(a.price) + '">' +
+          '<input type="checkbox" data-qw="' + w.id + '" data-qf="' + a.key + '" ' + (w[a.key] ? "checked" : "") + '>' +
+          '<span>' + esc(a.label) + '</span></label>';
+      }).join("");
+      var priceCell = L.counts
+        ? '<span class="qprice">' + money(L.total) + '</span><div class="qband">charged as ' + L.res.wBand + ' × ' + L.res.dBand + '</div>'
+        : '<span class="qwarn">' + esc(L.res.error || "") + '</span>';
+      return '<tr>' +
+        '<td class="idx">' + (i + 1) + '</td>' +
+        '<td><input value="' + esc(w.name || "") + '" placeholder="Window name" data-qw="' + w.id + '" data-qf="name"></td>' +
+        '<td><select data-qw="' + w.id + '" data-qf="group">' + groupOpts + '</select></td>' +
+        '<td><input class="mono num" type="number" value="' + esc(w.width || "") + '" placeholder="mm" data-qw="' + w.id + '" data-qf="width"></td>' +
+        '<td><input class="mono num" type="number" value="' + esc(w.drop || "") + '" placeholder="mm" data-qw="' + w.id + '" data-qf="drop"></td>' +
+        '<td class="ticks">' + boxes + '</td>' +
+        '<td class="qtotal">' + priceCell + '</td>' +
+        '<td class="rowact"><button class="btn small danger-ghost" data-del-qw="' + w.id + '" title="Remove window">✕</button></td>' +
+        '</tr>';
+    }).join("");
+
+    var canAdd = q.windows.length < MAX_QUOTE_WINDOWS;
+
+    app.innerHTML = topbar("quotes") +
+      '<main class="wrap">' +
+      '<div class="crumbs"><button class="link" data-go="quotes">← All quotes</button></div>' +
+      '<div class="jobhead"><div><h1>' + esc(q.jobName || "Untitled quote") + '</h1>' +
+      '<p class="sub"><span class="mono">' + esc(q.ref || "no reference") + '</span> · ' + esc(c ? c.name : "no client") +
+      ' · ' + T.qty + ' blind' + (T.qty === 1 ? "" : "s") + '</p></div>' +
+      '<div class="headctrls">' +
+      (T.qty ? '<button class="btn" data-action="print-quote">Print quote</button>' : "") +
+      '</div></div>' +
+
+      '<div class="card pad"><div class="formgrid">' +
+      '<label class="fld"><span>Client</span><select data-q-client>' + clientOpts + '</select></label>' +
+      '<label class="fld"><span>Quote reference</span><input value="' + esc(q.ref || "") + '" placeholder="Q 0001" data-q-field="ref"></label>' +
+      '<label class="fld"><span>Job / site name</span><input value="' + esc(q.jobName || "") + '" placeholder="e.g. Wilson Homes" data-q-field="jobName"></label>' +
+      '<label class="fld"><span>Date</span><input type="date" value="' + esc(q.date || "") + '" data-q-field="date"></label>' +
+      '</div>' +
+      '<div class="ordbar">' +
+      '<label class="toggle"><input type="checkbox" data-q-ordered="' + q.id + '" ' + (q.ordered ? "checked" : "") + '><span>Ordered</span></label>' +
+      (q.ordered ? '<label class="fld inline"><span>Date ordered</span><input type="date" value="' + esc(q.orderedDate || "") + '" data-q-orddate="' + q.id + '"></label>' : '') +
+      '</div></div>' +
+
+      '<div class="card" style="margin-top:16px">' +
+      '<table class="grid entry quotegrid"><thead><tr>' +
+      '<th class="idx">#</th><th>Window</th><th>Blind type</th><th>Width (mm)</th><th>Drop (mm)</th>' +
+      '<th>Extras</th><th class="ralign">Price</th><th></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>' +
+      '<div class="entryfoot">' +
+      '<button class="btn ' + (canAdd ? "primary" : "disabled") + '" data-action="add-qw" ' + (canAdd ? "" : "disabled") + '>+ Add window</button>' +
+      '<span class="count">' + q.windows.length + ' / ' + MAX_QUOTE_WINDOWS + ' windows</span>' +
+      '</div></div>' +
+
+      '<div class="card pad" style="margin-top:16px">' +
+      '<label class="fld wide" style="margin-top:0"><span>Fabric / colour notes</span>' +
+      '<textarea rows="3" placeholder="e.g. Bed 1 &amp; 2 — Vibe Snow. Kitchen — Vibe Dune." data-q-field="fabricNotes">' +
+      esc(q.fabricNotes || "") + '</textarea></label>' +
+      '<p class="hint" style="margin-top:8px">This prints at the bottom of the quote. Leave it blank and the printed quote gets ruled lines to write on instead.</p>' +
+      '</div>' +
+
+      '<div class="card pad totals">' +
+      '<div class="togrow">' +
+      '<label class="toggle"><input type="checkbox" data-action="q-install" ' + (q.install ? "checked" : "") + '>' +
+      '<span>Installation at ' + money(INSTALL_PER_BLIND) + ' per blind</span></label>' +
+      '<label class="toggle"><input type="checkbox" data-action="q-gst" ' + (q.gst ? "checked" : "") + '>' +
+      '<span>Add GST (10%)</span></label>' +
+      '</div>' +
+      '<table class="ttable">' +
+      '<tr><td>Blinds' + (T.qty ? ' (' + T.qty + ')' : '') + '</td><td class="mono">' + money(T.blinds) + '</td></tr>' +
+      (T.addons ? '<tr><td>Extras</td><td class="mono">' + money(T.addons) + '</td></tr>' : '') +
+      (q.install ? '<tr><td>Installation (' + T.qty + ' × ' + money(INSTALL_PER_BLIND) + ')</td><td class="mono">' + money(T.install) + '</td></tr>' : '') +
+      (q.gst
+        ? '<tr class="tsub"><td>Subtotal (excl GST)</td><td class="mono">' + money(T.sub) + '</td></tr>' +
+          '<tr><td>GST (10%)</td><td class="mono">' + money(T.gst) + '</td></tr>' +
+          '<tr class="tgrand"><td>Total (incl GST)</td><td class="mono">' + money(T.total) + '</td></tr>'
+        : '<tr class="tgrand"><td>Total</td><td class="mono">' + money(T.total) + '</td></tr>' +
+          '<tr><td colspan="2" class="exgst">Prices exclude GST</td></tr>') +
+      '</table>' +
+      (T.unpriced ? '<p class="qwarn2">' + T.unpriced + ' window' + (T.unpriced === 1 ? " is" : "s are") +
+        ' not priced yet — check the sizes marked in red above.</p>' : '') +
+      '</div>' +
+
+      '<p class="hint">Sizes are charged at the next band up on the price list — a 1000 mm width is charged as 1230. ' +
+      'Prices are from the list effective 1 December 2025.</p>' +
+      '</main>';
+  }
+
+  async function newQuote() {
+    var row = {
+      quote_ref: "", client_id: clients[0] ? clients[0].id : null, job_name: "",
+      quote_date: todayISO(), include_install: true, include_gst: false,
+      ordered: false, fabric_notes: "", windows: [blankQuoteWindow()]
+    };
+    var r = await db.from("quotes").insert(row).select().single();
+    if (r.error) { toast("Could not create quote."); return; }
+    quotes.unshift(toAppQuote(r.data));
+    state.view = "quote"; state.quoteId = r.data.id; render();
+  }
+  async function deleteQuote(id) {
+    var q = getQuote(id);
+    if (!q || !confirm('Delete quote “' + (q.jobName || q.ref || "Untitled") + '”? This cannot be undone.')) return;
+    var r = await db.from("quotes").delete().eq("id", id);
+    if (r.error) { toast("Delete failed."); return; }
+    quotes = quotes.filter(function (x) { return x.id !== id; }); render();
+  }
+  function setOrdered(id, on) {
+    var q = getQuote(id); if (!q) return;
+    q.ordered = on;
+    queueQuotePatch(id, "ordered", on);
+    if (on && !q.orderedDate) { q.orderedDate = todayISO(); queueQuotePatch(id, "ordered_date", q.orderedDate); }
+    render();
+  }
+
+  function printQuote(q) {
+    var lines = quoteLines(q).filter(function (L) { return L.counts; });
+    if (!lines.length) { toast("Nothing priced to print yet."); return; }
+    var T = quoteTotals(q);
+    var c = getClient(q.clientId);
+
+    var rows = lines.map(function (L, i) {
+      var extras = ADDONS.filter(function (a) { return L.w[a.key]; })
+        .map(function (a) { return a.label; }).join(", ");
+      return '<tr><td class="ct">' + (i + 1) + '</td>' +
+        '<td class="wname">' + esc(L.w.name || "—") + '</td>' +
+        '<td>' + esc(PRICE_TABLES[L.w.group].label) + '</td>' +
+        '<td class="sz">' + esc(L.w.width) + '</td>' +
+        '<td class="sz">' + esc(L.w.drop) + '</td>' +
+        '<td>' + esc(extras || "—") + '</td>' +
+        '<td class="ra">' + money(L.total) + '</td></tr>';
+    }).join("");
+
+    var fabric = (q.fabricNotes || "").trim()
+      ? '<div class="fabbox">' + esc(q.fabricNotes).replace(/\n/g, "<br>") + '</div>'
+      : '<div class="fablines"><div></div><div></div><div></div><div></div></div>';
+
+    doPrint(
+      '<div class="p-quote">' +
+      '<div class="p-head"><h2>Quotation</h2>' +
+      '<div class="p-meta">' +
+      '<div><b>' + esc(q.jobName || "") + '</b></div>' +
+      '<div>' + esc(c ? c.name : "") + (q.ref ? ' · ' + esc(q.ref) : '') + '</div>' +
+      '<div>Date ' + esc(fmtDate(q.date)) + '</div>' +
+      '</div></div>' +
+
+      '<table class="p-grid qgrid"><thead><tr>' +
+      '<th class="ct">#</th><th>Window</th><th>Blind type</th>' +
+      '<th class="sz">Width</th><th class="sz">Drop</th><th>Extras</th><th class="ra">Price</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' +
+
+      '<table class="p-tot">' +
+      '<tr><td>Blinds (' + T.qty + ')</td><td class="ra">' + money(T.blinds) + '</td></tr>' +
+      (T.addons ? '<tr><td>Extras</td><td class="ra">' + money(T.addons) + '</td></tr>' : '') +
+      (q.install ? '<tr><td>Installation (' + T.qty + ' × ' + money(INSTALL_PER_BLIND) + ')</td><td class="ra">' + money(T.install) + '</td></tr>' : '') +
+      (q.gst
+        ? '<tr class="sub"><td>Subtotal (excl GST)</td><td class="ra">' + money(T.sub) + '</td></tr>' +
+          '<tr><td>GST (10%)</td><td class="ra">' + money(T.gst) + '</td></tr>' +
+          '<tr class="grand"><td>Total (incl GST)</td><td class="ra">' + money(T.total) + '</td></tr>'
+        : '<tr class="grand"><td>Total</td><td class="ra">' + money(T.total) + '</td></tr>' +
+          '<tr><td colspan="2" class="exg">Prices exclude GST</td></tr>') +
+      '</table>' +
+
+      '<div class="fabsec"><h3>Fabric / colour</h3>' + fabric + '</div>' +
+
+      '<p class="p-foot">SAN Pty Ltd · 55 Lampton Avenue, Derwent Park TAS · Ph 6272 3400 · orders@sanptyltd.com<br>' +
+      'Quotation valid for 30 days. All sizes in millimetres.</p>' +
+      '</div>');
   }
 
   /* ---------- printing ---------- */
@@ -861,7 +1301,8 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   document.addEventListener("click", function (e) {
     var t = e.target.closest("[data-go],[data-action],[data-edit],[data-del-job],[data-tab]," +
       "[data-edit-client],[data-del-client],[data-del-win],[data-del-holiday]," +
-      "[data-link-client],[data-copy-link],[data-newtoken],[data-del-hgroup],.m-close,[data-msave]");
+      "[data-link-client],[data-copy-link],[data-newtoken],[data-del-hgroup],[data-del-qw]," +
+      "[data-edit-quote],[data-del-quote],.m-close,[data-msave]");
     if (!t) return;
     if (t.hasAttribute("data-go")) { state.view = t.getAttribute("data-go"); if (state.view === "dashboard") state.jobId = null; render(); }
     else if (t.hasAttribute("data-tab")) { state.tab = t.getAttribute("data-tab"); render(); }
@@ -874,6 +1315,16 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     else if (t.hasAttribute("data-del-client")) deleteClient(t.getAttribute("data-del-client"));
     else if (t.hasAttribute("data-del-holiday")) deleteHoliday(t.getAttribute("data-del-holiday"));
     else if (t.hasAttribute("data-del-hgroup")) deleteHolidayGroup(t.getAttribute("data-del-hgroup"));
+    else if (t.hasAttribute("data-edit-quote")) { state.view = "quote"; state.quoteId = t.getAttribute("data-edit-quote"); render(); }
+    else if (t.hasAttribute("data-del-quote")) deleteQuote(t.getAttribute("data-del-quote"));
+    else if (t.hasAttribute("data-del-qw")) {
+      var qq = getQuote(state.quoteId);
+      if (qq) {
+        qq.windows = qq.windows.filter(function (x) { return x.id !== t.getAttribute("data-del-qw"); });
+        if (!qq.windows.length) qq.windows.push(blankQuoteWindow());
+        queueQuotePatch(qq.id, "windows", qq.windows); render();
+      }
+    }
     else if (t.hasAttribute("data-del-win")) {
       var job = getJob(state.jobId);
       job.windows = job.windows.filter(function (x) { return x.id !== t.getAttribute("data-del-win"); });
@@ -892,6 +1343,16 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       else if (a === "print-cloth") printCloth(getJob(state.jobId));
       else if (a === "print-labels") printLabels(getJob(state.jobId));
       else if (a === "addholiday") addHoliday();
+      else if (a === "new-quote") newQuote();
+      else if (a === "add-qw") {
+        var qa = getQuote(state.quoteId);
+        if (qa && qa.windows.length < MAX_QUOTE_WINDOWS) {
+          qa.windows.push(blankQuoteWindow()); queueQuotePatch(qa.id, "windows", qa.windows); render();
+        }
+      }
+      else if (a === "q-install") { var qi = getQuote(state.quoteId); if (qi) { setQuoteField(qi, "install", t.checked); render(); } }
+      else if (a === "q-gst") { var qg = getQuote(state.quoteId); if (qg) { setQuoteField(qg, "gst", t.checked); render(); } }
+      else if (a === "print-quote") { var qp = getQuote(state.quoteId); if (qp) printQuote(qp); }
       else if (a === "hmode-single") { state.holidayMode = "single"; render(); }
       else if (a === "hmode-range") { state.holidayMode = "range"; render(); }
       else if (a === "export") exportData();
@@ -903,6 +1364,23 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   document.addEventListener("input", function (e) {
     var el = e.target;
     if (el.hasAttribute && el.hasAttribute("data-search")) { state.search = el.value; renderDashboardKeepFocus(); return; }
+    if (el.hasAttribute("data-qsearch")) { state.quoteSearch = el.value; renderQuotesKeepFocus(); return; }
+    if (el.hasAttribute("data-q-field")) {
+      var qf = getQuote(state.quoteId);
+      if (qf) setQuoteField(qf, el.getAttribute("data-q-field"), el.value);
+      return;
+    }
+    if (el.hasAttribute("data-qw")) {
+      var qe = getQuote(state.quoteId); if (!qe) return;
+      var qw = qe.windows.filter(function (x) { return x.id === el.getAttribute("data-qw"); })[0];
+      if (qw) {
+        var f = el.getAttribute("data-qf");
+        qw[f] = el.value;
+        queueQuotePatch(qe.id, "windows", qe.windows);
+        if (f === "width" || f === "drop") renderQuoteKeepFocus(el);
+      }
+      return;
+    }
     var job = getJob(state.jobId); if (!job) return;
     if (el.hasAttribute("data-job-field")) {
       var f = el.getAttribute("data-job-field"); job[f] = el.value; if (FIELD_COL[f]) queueJobPatch(job.id, FIELD_COL[f], el.value);
@@ -916,6 +1394,31 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     var el = e.target;
     if (el.hasAttribute("data-status-job")) {
       var j = getJob(el.getAttribute("data-status-job")); if (j) { j.status = el.value; queueJobPatch(j.id, "status", el.value); render(); } return;
+    }
+    if (el.hasAttribute("data-q-ordered")) { setOrdered(el.getAttribute("data-q-ordered"), el.checked); return; }
+    if (el.hasAttribute("data-q-orddate")) {
+      var qo = getQuote(el.getAttribute("data-q-orddate"));
+      if (qo) { qo.orderedDate = el.value; queueQuotePatch(qo.id, "ordered_date", el.value); }
+      return;
+    }
+    if (el.hasAttribute("data-q-client")) {
+      var qc = getQuote(state.quoteId);
+      if (qc) { setQuoteField(qc, "clientId", el.value || null); render(); }
+      return;
+    }
+    if (el.getAttribute("data-q-field") === "date") {
+      var qd = getQuote(state.quoteId);
+      if (qd) { setQuoteField(qd, "date", el.value); render(); }
+      return;
+    }
+    if (el.hasAttribute("data-qw")) {
+      var qe2 = getQuote(state.quoteId); if (!qe2) return;
+      var qw2 = qe2.windows.filter(function (x) { return x.id === el.getAttribute("data-qw"); })[0];
+      if (qw2) {
+        qw2[el.getAttribute("data-qf")] = (el.type === "checkbox") ? el.checked : el.value;
+        queueQuotePatch(qe2.id, "windows", qe2.windows); render();
+      }
+      return;
     }
     var job = getJob(state.jobId); if (!job) return;
     if (el.hasAttribute("data-job-client")) { job.clientId = el.value || null; queueJobPatch(job.id, "client_id", job.clientId); render(); }
@@ -934,6 +1437,22 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     }
   });
 
+  function renderQuoteKeepFocus(el) {
+    var id = el.getAttribute("data-qw"), f = el.getAttribute("data-qf");
+    var pos = null;
+    try { pos = el.selectionStart; } catch (e) {}
+    render();
+    var back = document.querySelector('[data-qw="' + id + '"][data-qf="' + f + '"]');
+    if (back) {
+      back.focus();
+      try { if (pos !== null) back.setSelectionRange(pos, pos); } catch (e) {}
+    }
+  }
+  function renderQuotesKeepFocus() {
+    var val = state.quoteSearch; render();
+    var s2 = document.querySelector("[data-qsearch]");
+    if (s2) { s2.focus(); s2.value = val; try { s2.setSelectionRange(val.length, val.length); } catch (e) {} }
+  }
   function renderDashboardKeepFocus() {
     var val = state.search; render();
     var s = document.querySelector("[data-search]");
