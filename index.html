@@ -242,6 +242,8 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   .fabbox{border:1px solid #333;padding:10px 12px;font-size:12.5px;min-height:52px;line-height:1.6}
   .fablines div{border-bottom:1px solid #888;height:22px}
 }
+.quotegrid th:nth-child(3),.quotegrid td:nth-child(3){min-width:200px}
+.quotegrid td:nth-child(3) select{width:100%;min-width:20ch;white-space:nowrap;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -904,9 +906,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
           '<input type="checkbox" data-qw="' + w.id + '" data-qf="' + a.key + '" ' + (w[a.key] ? "checked" : "") + '>' +
           '<span>' + esc(a.label) + '</span></label>';
       }).join("");
-      var priceCell = L.counts
-        ? '<span class="qprice">' + money(L.total) + '</span><div class="qband">charged as ' + L.res.wBand + ' × ' + L.res.dBand + '</div>'
-        : '<span class="qwarn">' + esc(L.res.error || "") + '</span>';
+      var priceCell = qPriceHTML(L);
       return '<tr>' +
         '<td class="idx">' + (i + 1) + '</td>' +
         '<td><input value="' + esc(w.name || "") + '" placeholder="Window name" data-qw="' + w.id + '" data-qf="name"></td>' +
@@ -914,7 +914,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
         '<td><input class="mono num" type="number" value="' + esc(w.width || "") + '" placeholder="mm" data-qw="' + w.id + '" data-qf="width"></td>' +
         '<td><input class="mono num" type="number" value="' + esc(w.drop || "") + '" placeholder="mm" data-qw="' + w.id + '" data-qf="drop"></td>' +
         '<td class="ticks">' + boxes + '</td>' +
-        '<td class="qtotal">' + priceCell + '</td>' +
+        '<td class="qtotal" data-qprice="' + w.id + '">' + priceCell + '</td>' +
         '<td class="rowact"><button class="btn small danger-ghost" data-del-qw="' + w.id + '" title="Remove window">✕</button></td>' +
         '</tr>';
     }).join("");
@@ -959,8 +959,22 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       '<p class="hint" style="margin-top:8px">This prints at the bottom of the quote. Leave it blank and the printed quote gets ruled lines to write on instead.</p>' +
       '</div>' +
 
-      '<div class="card pad totals">' +
-      '<div class="togrow">' +
+      '<div class="card pad totals" id="qtotalbox">' + qTotalsHTML(q) + '</div>' +
+
+      '<p class="hint">Sizes are charged at the next band up on the price list — a 1000 mm width is charged as 1230. ' +
+      'Prices are from the list effective 1 December 2025.</p>' +
+      '</main>';
+  }
+
+  function qPriceHTML(L) {
+    return L.counts
+      ? '<span class="qprice">' + money(L.total) + '</span><div class="qband">charged as ' +
+        L.res.wBand + ' × ' + L.res.dBand + '</div>'
+      : '<span class="qwarn">' + esc(L.res.error || "") + '</span>';
+  }
+  function qTotalsHTML(q) {
+    var T = quoteTotals(q);
+    return '<div class="togrow">' +
       '<label class="toggle"><input type="checkbox" data-action="q-install" ' + (q.install ? "checked" : "") + '>' +
       '<span>Installation at ' + money(INSTALL_PER_BLIND) + ' per blind</span></label>' +
       '<label class="toggle"><input type="checkbox" data-action="q-gst" ' + (q.gst ? "checked" : "") + '>' +
@@ -978,12 +992,17 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
           '<tr><td colspan="2" class="exgst">Prices exclude GST</td></tr>') +
       '</table>' +
       (T.unpriced ? '<p class="qwarn2">' + T.unpriced + ' window' + (T.unpriced === 1 ? " is" : "s are") +
-        ' not priced yet — check the sizes marked in red above.</p>' : '') +
-      '</div>' +
-
-      '<p class="hint">Sizes are charged at the next band up on the price list — a 1000 mm width is charged as 1230. ' +
-      'Prices are from the list effective 1 December 2025.</p>' +
-      '</main>';
+        ' not priced yet — check the sizes marked in red above.</p>' : '');
+  }
+  /* Update prices in place while typing — never re-render, so the
+     cursor stays exactly where the user put it. */
+  function refreshQuoteLive(q) {
+    quoteLines(q).forEach(function (L) {
+      var cell = document.querySelector('[data-qprice="' + L.w.id + '"]');
+      if (cell) cell.innerHTML = qPriceHTML(L);
+    });
+    var box = document.getElementById("qtotalbox");
+    if (box) box.innerHTML = qTotalsHTML(q);
   }
 
   async function newQuote() {
@@ -1377,7 +1396,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
         var f = el.getAttribute("data-qf");
         qw[f] = el.value;
         queueQuotePatch(qe.id, "windows", qe.windows);
-        if (f === "width" || f === "drop") renderQuoteKeepFocus(el);
+        refreshQuoteLive(qe);
       }
       return;
     }
@@ -1415,8 +1434,11 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       var qe2 = getQuote(state.quoteId); if (!qe2) return;
       var qw2 = qe2.windows.filter(function (x) { return x.id === el.getAttribute("data-qw"); })[0];
       if (qw2) {
-        qw2[el.getAttribute("data-qf")] = (el.type === "checkbox") ? el.checked : el.value;
-        queueQuotePatch(qe2.id, "windows", qe2.windows); render();
+        var cf = el.getAttribute("data-qf");
+        qw2[cf] = (el.type === "checkbox") ? el.checked : el.value;
+        queueQuotePatch(qe2.id, "windows", qe2.windows);
+        /* width/drop update in place so the caret is never disturbed */
+        if (cf === "width" || cf === "drop") refreshQuoteLive(qe2); else render();
       }
       return;
     }
@@ -1437,17 +1459,6 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     }
   });
 
-  function renderQuoteKeepFocus(el) {
-    var id = el.getAttribute("data-qw"), f = el.getAttribute("data-qf");
-    var pos = null;
-    try { pos = el.selectionStart; } catch (e) {}
-    render();
-    var back = document.querySelector('[data-qw="' + id + '"][data-qf="' + f + '"]');
-    if (back) {
-      back.focus();
-      try { if (pos !== null) back.setSelectionRange(pos, pos); } catch (e) {}
-    }
-  }
   function renderQuotesKeepFocus() {
     var val = state.quoteSearch; render();
     var s2 = document.querySelector("[data-qsearch]");
