@@ -242,8 +242,19 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   .fabbox{border:1px solid #333;padding:10px 12px;font-size:12.5px;min-height:52px;line-height:1.6}
   .fablines div{border-bottom:1px solid #888;height:22px}
 }
-.quotegrid th:nth-child(3),.quotegrid td:nth-child(3){min-width:200px}
-.quotegrid td:nth-child(3) select{width:100%;min-width:20ch;white-space:nowrap;text-overflow:ellipsis}
+.quotegrid th:nth-child(3),.quotegrid td:nth-child(3){min-width:270px}
+.quotegrid td:nth-child(3) select{width:100%;min-width:24ch}
+.quotegrid th:nth-child(4),.quotegrid td:nth-child(4),
+.quotegrid th:nth-child(5),.quotegrid td:nth-child(5){min-width:120px}
+.quotegrid td input.num{font-size:15.5px;padding:9px 11px;letter-spacing:.4px}
+/* no up/down spinners on measurement fields — they invite mis-clicks */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.chip{font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px;white-space:nowrap}
+.chip.saving{background:rgba(255,255,255,.14);color:#cfe0ee}
+.chip.saved{background:rgba(60,200,140,.18);color:#8ff0c4}
+#savechip:empty{display:none}
 </style>
 </head>
 <body>
@@ -302,7 +313,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       }
     },
     "Group B - Roller": {
-      label: "Group B — Roller",
+      label: "Group B — Blockouts",
       widths: PRICE_WIDTHS,
       drops: [900, 1200, 1500, 1800, 2100, 2400, 2700],
       rows: {
@@ -461,6 +472,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   /* ---------- debounced remote writes ---------- */
   var pending = {}, patchT = {};
   function queueJobPatch(id, col, value) {
+    setSaveState("saving");
     pending[id] = pending[id] || {};
     pending[id][col] = value;
     clearTimeout(patchT[id]);
@@ -470,7 +482,8 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     var patch = pending[id]; if (!patch) return;
     delete pending[id];
     var r = await db.from("jobs").update(patch).eq("id", id);
-    if (r.error) toast("Save failed — check your connection.");
+    if (r.error) { setSaveState("idle"); toast("Save failed — check your connection."); }
+    else setSaveState("saved");
   }
 
   /* ============================================================
@@ -525,6 +538,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
 
   var qPending = {}, qPatchT = {};
   function queueQuotePatch(id, col, value) {
+    setSaveState("saving");
     qPending[id] = qPending[id] || {};
     qPending[id][col] = value;
     clearTimeout(qPatchT[id]);
@@ -534,7 +548,8 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
     var patch = qPending[id]; if (!patch) return;
     delete qPending[id];
     var r = await db.from("quotes").update(patch).eq("id", id);
-    if (r.error) toast("Save failed — check your connection.");
+    if (r.error) { setSaveState("idle"); toast("Save failed — check your connection."); }
+    else setSaveState("saved");
   }
   function setQuoteField(q, field, value) {
     q[field] = value;
@@ -600,6 +615,7 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       '<button class="navlink ' + (active === "holidays" ? "on" : "") + '" data-go="holidays">Holidays</button>' +
       '</nav>' +
       '<div class="topactions">' +
+      '<span id="savechip">' + saveChipHTML() + '</span>' +
       '<span class="who">' + esc(user ? user.email : "") + '</span>' +
       '<button class="btn ghost" data-action="export">Backup</button>' +
       '<button class="btn ghost" data-action="signout">Sign out</button>' +
@@ -1108,6 +1124,23 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
   }
 
   /* ---------- toast ---------- */
+  /* ---------- save status ---------- */
+  var saveState = "idle", saveHideT;
+  function saveChipHTML() {
+    if (saveState === "saving") return '<span class="chip saving">Saving…</span>';
+    if (saveState === "saved")  return '<span class="chip saved">✓ All changes saved</span>';
+    return "";
+  }
+  function paintSaveChip() {
+    var el = document.getElementById("savechip");
+    if (el) el.innerHTML = saveChipHTML();
+  }
+  function setSaveState(s) {
+    saveState = s; paintSaveChip();
+    clearTimeout(saveHideT);
+    if (s === "saved") saveHideT = setTimeout(function () { saveState = "idle"; paintSaveChip(); }, 2500);
+  }
+
   var toastT;
   function toast(msg) {
     var el = document.getElementById("toast"); el.textContent = msg; el.classList.add("show");
@@ -1451,6 +1484,12 @@ select.statussel.s-green{background:#dcf3e4;color:#1d7a45}
       if (w) { w.faceRec = el.value; saveWindows(job); }
     }
   });
+
+  /* A stray scroll over a focused number field must not change a size */
+  document.addEventListener("wheel", function (e) {
+    var el = e.target;
+    if (el && el.tagName === "INPUT" && el.type === "number" && document.activeElement === el) el.blur();
+  }, { passive: true });
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") closeModal();
